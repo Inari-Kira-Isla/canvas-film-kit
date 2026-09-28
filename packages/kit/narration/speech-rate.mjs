@@ -34,6 +34,7 @@
 // env var name as the ported Python original, so the two can share fixtures byte-for-byte).
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const DECLARATION_RE = /speech_rate_cps:\s*([0-9]+(?:\.[0-9]+)?)\s+source:\s*(\S+)/g;
 const CJK_RE = /[一-鿿]/g;
@@ -172,7 +173,25 @@ export function runSpeechRateGate(repoRoot) {
 }
 
 // Only run as a CLI when invoked directly (not when imported, e.g. by a parity test harness).
-if (import.meta.url === `file://${process.argv[1]}`) {
+//
+// BUG (Windows CI, 2026-09-28): `import.meta.url === \`file://${process.argv[1]}\`` naively
+// string-concatenates "file://" onto process.argv[1] — on Windows argv[1] is a drive-letter path
+// with BACKSLASHES ("C:\...\speech-rate.mjs"), while import.meta.url is always a proper file: URL
+// with forward slashes and three slashes before the drive letter ("file:///C:/.../speech-rate.mjs").
+// Those two strings can never be equal on Windows, so this whole CLI block silently never ran —
+// runSpeechRateGate() was never called, process.exit() was never called, and node fell through to
+// its own default exit code 0 regardless of the gate's real verdict. That is exactly the silent
+// "couldn't run the check -> treat it as PASS" failure mode this kit's gates exist to prevent
+// (AGENTS.md §5) — it just came from the module's own entrypoint guard instead of from inside the
+// check. `good` passing on exit 0 masked it completely; only `bad` (which needs the gate to
+// actually execute and exit 1) exposed it. Fix: convert import.meta.url back to an OS-native path
+// with `fileURLToPath` and compare THAT against argv[1] — both sides are then in the same (OS-native,
+// not URL) form, which is Node's own documented cross-platform "is this the entrypoint module"
+// pattern (see Node docs, ESM: "Determining if a module was called from the command line"), and
+// avoids a second Windows-only trap in the `pathToFileURL(argv[1]).href` alternative: percent-encoding
+// of special characters (spaces, `#`, `%`) can make a round-tripped URL not byte-equal to
+// import.meta.url even when both point at the same file.
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const repoRoot = path.resolve(process.argv[2] ?? '.');
   process.exit(runSpeechRateGate(repoRoot));
 }

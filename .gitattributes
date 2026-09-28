@@ -1,0 +1,24 @@
+# Defense-in-depth for Windows CI (2026-09-28 windows-latest fixture-test investigation): the
+# speech-rate/bad Windows CI failure turned out to be a path/URL bug in speech-rate.mjs itself (see
+# that file's own comment), NOT CRLF — a local `git -c core.autocrlf=true clone` repro showed every
+# fixture, including speech-rate's, still parses and verdicts correctly under CRLF line endings.
+# Even so, this repo shipped with no .gitattributes at all, which leaves every text fixture's line
+# endings up to each contributor's/runner's global git config (autocrlf) by accident rather than by
+# design — a real risk for any *future* gate that does something more line-sensitive than this one
+# turned out to need. Pin it explicitly instead of relying on that being true forever.
+* text=auto eol=lf
+
+# Fixture "audio" files are tiny synthetic placeholders (a few bytes), not real MP3/WAV — mark them
+# binary explicitly so line-ending normalization never touches them regardless of git's own
+# content-sniffing heuristic (they already contain a NUL byte, so the heuristic catches them today,
+# but the point of this file is to stop depending on heuristics for anything that must stay binary).
+*.mp3 binary
+*.wav binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
