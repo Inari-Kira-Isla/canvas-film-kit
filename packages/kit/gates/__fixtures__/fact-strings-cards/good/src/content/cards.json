@@ -1,0 +1,6 @@
+{
+  "cards": [
+    { "card_id": "N1-1", "n_id": "N1", "scene": "moon", "fact": "C01", "zh": "月相變化週期大約係 29.5 日一次", "en": "The cycle repeats roughly every 29.5 days." },
+    { "card_id": "N1-2", "n_id": "N1", "scene": "moon", "zh": "月光其實係反射太陽光", "en": "Moonlight is reflected sunlight." }
+  ]
+}

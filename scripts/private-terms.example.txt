@@ -1,0 +1,18 @@
+# scripts/private-terms.example.txt — format reference for release-scan.mjs's external private-term
+# list. This file ships IN the repo and must only ever contain synthetic/example terms — never real
+# brand names, internal project codenames, or personal identifiers (that's the whole point of this
+# mechanism, see scripts/release-scan.mjs's 2026-09-29 header note).
+#
+# Copy this file to ~/.config/canvas-film-kit/private-terms.txt (or any path, then set
+# RELEASE_SCAN_PRIVATE_TERMS=<path>) and replace the example lines below with your own real terms.
+#
+# Format: one term per line. Blank lines and lines starting with # are ignored.
+#   - An ASCII-word-only term (letters/digits/_/-) is matched with \b word boundaries, so it won't
+#     fire on substrings of ordinary English words.
+#   - Anything else (CJK, spaces, punctuation) is matched as a plain case-insensitive substring.
+#
+# Example entries (synthetic — replace with your own brand names, internal codenames, personal
+# names, or any other string that would identify you/your org if this repo went public):
+acmecorp
+project-falcon
+jane-doe

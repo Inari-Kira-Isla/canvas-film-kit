@@ -1,0 +1,306 @@
+// new-film.mjs — the shared scaffolding implementation behind BOTH `kit new` and the separate
+// `create-canvas-film` package (so `npx create-canvas-film my-film --profile x` and
+// `kit new my-film --profile x` are exactly the same code path, never two copies that can drift).
+//
+// Copies templates/base/ into a new git repo, writes PROFILE (+ its three axes) into src/config.ts,
+// writes a package.json wiring the scaffolded project to THIS kit install (via a `file:` dependency
+// — v0.1 ships pre-npm-publish, see the repo's docs/design/why-file-dependency.md), and generates a
+// docs/preproduction.md skeleton with the P0 approval line `kit gate`'s story-metrics step hard-checks.
+//
+// K1 shipped `abstract` only; K2 adds `music` (see PROFILES below). explainer/history/economics
+// land in later batches — see docs/design/profiles.md. The first commit's message contains the literal string
+// `scaffold:` — a `git log` showing that commit is machine-readable proof this command (and not a
+// hand-copy of templates/) was actually used.
+//
+// Exit codes: 0 = scaffolded, 1 = target dir problem / bad args, 2 = internal error (copy/git failed)
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url)); // .../packages/kit/scaffold
+const KIT_PKG_DIR = path.resolve(HERE, '..'); // .../packages/kit
+// K5: templates/ used to live at the monorepo root (sibling of packages/), resolved here via
+// `path.resolve(KIT_PKG_DIR, '..', '..')`. That only works inside this repo's own working tree — a
+// real (or tarball-simulated) npm install of `canvas-film-kit` gives you ONLY what packages/kit's
+// package.json "files" array lists, and nothing two directories above it exists at all (there is no
+// monorepo there, just this one package under node_modules/). templates/ now lives INSIDE
+// packages/kit/ and ships as part of the published package for exactly this reason.
+const TEMPLATES_DIR = path.join(KIT_PKG_DIR, 'templates', 'base');
+
+// I3' fix (2026-09-29 re-review, second pass) — the git spec a scaffolded project's package.json
+// depends on when `kit new`/`create-canvas-film` was itself run from an npm-installed copy of this
+// kit (see the `usesNodeModulesInstall` branch below). Points at this repo's own root (npm git deps
+// cannot target a subdirectory), pinned to the v0.1.0 tag so a scaffold made today keeps working even
+// after a later tag changes root package.json's shape. CANVAS_FILM_KIT_GIT_SPEC lets a fork (or this
+// re-review's own local-bare-repo test, via `git config --global url.<base>.insteadOf`) override the
+// owner/tag without touching this file — unset, it defaults to the real, public release location.
+const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.1.0';
+
+// K1 shipped `abstract` only; K2 added `music` (design doc §3/§9 K2 row — a music-video profile
+// driven by beats.json rather than a narrator or fixed cadence). K3 added `explainer`
+// (narration-driven, TTS timeline — design doc §9 K3 row). K4 adds `history` (two independent time
+// axes, schematic map routes, silhouette portraits, source-tier + disputed-wording checks) and
+// `economics` (charts/count-up, dataset provenance) — design doc §9 K4 row. All five profiles this
+// kit's design doc names now scaffold; `kit new`'s own generated docs/preproduction.md still only
+// gives a generic skeleton (no profile-specific starter scene) — a history/economics project's real
+// scene work still starts from the component templates (templates/components/{year-axis,map-route,
+// silhouette,split-compare,charts/*,count-up,entity-card,source-footer}.ts) + this kit's own shipped
+// demos (demos/history, demos/economics) as worked examples, same as every other profile.
+export const PROFILES = ['abstract', 'music', 'explainer', 'history', 'economics'];
+const AXES = {
+  abstract: { driver: 'none', facts: 'none', rubric: 'abstract' },
+  music: { driver: 'music', facts: 'label', rubric: 'music' },
+  explainer: { driver: 'narration', facts: 'knowledge', rubric: 'explainer' },
+  history: { driver: 'narration', facts: 'history', rubric: 'history' },
+  economics: { driver: 'narration', facts: 'data', rubric: 'economics' },
+};
+
+export class ScaffoldError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
+export function scaffold({ target, profile }) {
+  if (!PROFILES.includes(profile)) {
+    throw new ScaffoldError(
+      `--profile "${profile}" is not available yet — this kit release only scaffolds: ${PROFILES.join(', ')} ` +
+        `(music/explainer/history/economics land in later batches — see docs/design/profiles.md).`,
+      1,
+    );
+  }
+  if (!existsSync(TEMPLATES_DIR)) {
+    throw new ScaffoldError(`templates/base/ not found at ${TEMPLATES_DIR} — is this kit install complete?`, 2);
+  }
+
+  const resolvedTarget = path.resolve(process.cwd(), target);
+  if (existsSync(resolvedTarget)) {
+    const entries = readdirSync(resolvedTarget);
+    if (entries.length > 0) {
+      throw new ScaffoldError(`target directory "${resolvedTarget}" already exists and is not empty (${entries.length} entries) — will not overwrite; pick another path or clear it by hand.`, 1);
+    }
+  }
+  mkdirSync(resolvedTarget, { recursive: true });
+
+  // ---- 1. copy templates/base/ ----
+  try {
+    cpSync(TEMPLATES_DIR, resolvedTarget, { recursive: true });
+  } catch (e) {
+    throw new ScaffoldError(`copy templates/base/ → ${resolvedTarget} failed: ${e.message}`, 2);
+  }
+
+  // ---- 2. write src/config.ts (PROFILE + 3 axes) ----
+  const axes = AXES[profile];
+  const configPath = path.join(resolvedTarget, 'src/config.ts');
+  if (!existsSync(configPath)) throw new ScaffoldError(`copy succeeded but ${configPath} is missing — templates/base/src/config.ts moved?`, 2);
+  {
+    let src = readFileSync(configPath, 'utf8');
+    const replace = (re, line) => {
+      if (!re.test(src)) throw new ScaffoldError(`src/config.ts has no match for pattern ${re} — templates/base changed shape, update scaffold/new-film.mjs alongside it.`, 2);
+      src = src.replace(re, line);
+    };
+    replace(/export const PROFILE:[^\n]*\n/, `export const PROFILE: 'abstract' | 'info-narrative' | 'music' | 'explainer' | 'history' | 'economics' = '${profile}';\n`);
+    replace(/export const DRIVER:[^\n]*\n/, `export const DRIVER: 'music' | 'narration' | 'none' = '${axes.driver}';\n`);
+    replace(/export const FACTS:[^\n]*\n/, `export const FACTS: 'none' | 'label' | 'knowledge' | 'history' | 'data' = '${axes.facts}';\n`);
+    replace(/export const RUBRIC:[^\n]*\n/, `export const RUBRIC: 'abstract' | 'info-narrative' | 'music' | 'explainer' | 'history' | 'economics' = '${axes.rubric}';\n`);
+    writeFileSync(configPath, src);
+  }
+
+  // ---- 2.5. rename .template.ts files to their real names + fix every cross-reference ----
+  // K1 shipped `color.template.ts`/`timeline.template.ts` as-is, requiring the user to rename them
+  // by hand (and fix the ~5 import statements across main.ts/draw.ts/texture.ts/scenes/theme.ts
+  // that pointed at the .template.ts names) before `kit gate` would even run — a K1 verifier
+  // (2026-09-28) correctly flagged this as "not turnkey": a fresh scaffold could not reach a
+  // passing `gate` with only the documented steps. Doing the rename + reference fix HERE, at
+  // scaffold time, means a fresh project ships with real `.ts` files and working imports from the
+  // start — `approved_by:` in docs/preproduction.md remains the ONE deliberate manual step (a
+  // human sign-off is the entire point of that gate, see story-metrics.mjs's own file header).
+  const templateRenames = [
+    ['src/core/color.template.ts', 'src/core/color.ts'],
+    ['src/core/timeline.template.ts', 'src/core/timeline.ts'],
+  ];
+  for (const [fromRel, toRel] of templateRenames) {
+    const fromAbs = path.join(resolvedTarget, fromRel);
+    const toAbs = path.join(resolvedTarget, toRel);
+    if (!existsSync(fromAbs)) continue; // templates/base changed shape — don't hard-fail a scaffold over it
+    let src = readFileSync(fromAbs, 'utf8');
+    // strip the "FILL IN — rename me" header line now that the rename has actually happened
+    src = src.replace(/^\/\/ FILL IN — rename to [^\n]*\n(\/\/\n)?/, '');
+    writeFileSync(toAbs, src);
+    rmSync(fromAbs);
+  }
+  // fix every `'...color.template'` / `'...timeline.template'` import specifier left pointing at
+  // the old names, across every .ts file the copy produced (main.ts, core/*, scenes/*, theme.ts).
+  const REF_FIXES = [
+    [/(['"][./]*core\/color)\.template(['"])/g, '$1$2'],
+    [/(['"]\.\/color)\.template(['"])/g, '$1$2'],
+    [/(['"][./]*core\/timeline)\.template(['"])/g, '$1$2'],
+    [/(['"]\.\/timeline)\.template(['"])/g, '$1$2'],
+  ];
+  function walkTs(dir, out = []) {
+    for (const name of readdirSync(dir)) {
+      const p = path.join(dir, name);
+      const st = statSync(p);
+      if (st.isDirectory()) walkTs(p, out);
+      else if (name.endsWith('.ts')) out.push(p);
+    }
+    return out;
+  }
+  for (const file of walkTs(path.join(resolvedTarget, 'src'))) {
+    let src = readFileSync(file, 'utf8');
+    let changed = false;
+    for (const [re, replacement] of REF_FIXES) {
+      if (re.test(src)) {
+        src = src.replace(re, replacement);
+        changed = true;
+      }
+    }
+    if (changed) writeFileSync(file, src);
+  }
+
+  // ---- 3. package.json (wires this scaffold to the kit install that scaffolded it) ----
+  // K5: a `node_modules` segment anywhere in KIT_PKG_DIR means this kit was consumed as an installed
+  // npm dependency (registry install, tarball install, or an npm-workspaces symlink into some OTHER
+  // project's node_modules) rather than being run from inside its own monorepo checkout — see the
+  // `dependencies` block below for why that distinction matters.
+  const usesNodeModulesInstall = KIT_PKG_DIR.split(path.sep).includes('node_modules');
+  let kitOwnVersion = '0.0.0';
+  try {
+    kitOwnVersion = JSON.parse(readFileSync(path.join(KIT_PKG_DIR, 'package.json'), 'utf8')).version ?? kitOwnVersion;
+  } catch { /* best-effort only — falls back to a semver range no real release will ever match, so a  broken version-read fails loudly (npm install 404) rather than silently */ }
+  const pkgName = path.basename(resolvedTarget).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'canvas-film';
+  const packageJson = {
+    name: pkgName,
+    private: true,
+    version: '0.1.0',
+    type: 'module',
+    scripts: {
+      dev: 'vite',
+      build: 'tsc --noEmit && vite build',
+      preview: 'vite preview',
+      typecheck: 'tsc --noEmit',
+      doctor: 'kit doctor',
+      gate: 'kit gate',
+      export: 'kit export',
+      stills: 'kit stills',
+      determinism: 'kit determinism',
+      'boundary-diff': 'kit boundary-diff',
+      fonts: 'kit fonts',
+    },
+    dependencies: {
+      // K5: KIT_PKG_DIR living inside a `node_modules/` directory means THIS scaffold command was
+      // itself resolved through a real (or tarball-simulated) npm install of canvas-film-kit — in
+      // that case a scaffolded project must get something a fresh `npm install` on ANY machine can
+      // resolve, never the absolute path of whatever machine happened to run `kit new`/
+      // `create-canvas-film` (that path is meaningless, and often private, on any other machine —
+      // see docs/design/why-file-dependency.md). Only the monorepo dev-checkout case (this kit's own
+      // packages/kit, scaffolding a demo or a throwaway local test film) still uses `file:` — that
+      // absolute path is at least locally correct and is the one case
+      // docs/design/why-file-dependency.md's caveats still apply to.
+      //
+      // I3' fix (2026-09-29 re-review, second pass): this used to write a bare semver range
+      // (`^${kitOwnVersion}`) for the node_modules-install case, on the assumption that by the time
+      // anyone hit that branch, `canvas-film-kit` would already be a published npm package — but
+      // this kit ships v0.1 GitHub-only, on purpose, with NO npm registry publish planned (see repo
+      // root README "Releasing"). A semver range with nothing on the registry 404s on `npm install`
+      // every single time (or worse, silently installs an unrelated same-named package if one ever
+      // gets squatted) — see the README's own GitHub-install quick start this exists to make work.
+      // Root package.json (this repo's own root, NOT packages/kit) is what actually gets fetched by
+      // a git dependency — npm's git-dependency spec has no subdirectory selector, so the whole
+      // repo is packed as one unit; that is why RELEASE_GIT_SPEC below points at the repo root and
+      // why root package.json's own `dependencies` (not just packages/kit's) must list esbuild/
+      // playwright/ws/fontkit — see root package.json's own comment on that field.
+      'canvas-film-kit': usesNodeModulesInstall ? RELEASE_GIT_SPEC : `file:${KIT_PKG_DIR}`,
+    },
+    devDependencies: {
+      typescript: '^5.6.0',
+      vite: '^6.0.0',
+    },
+  };
+  writeFileSync(path.join(resolvedTarget, 'package.json'), JSON.stringify(packageJson, null, 2) + '\n');
+
+  // ---- 4. docs/preproduction.md skeleton (the P0 approval line kit gate hard-checks) ----
+  const today = new Date().toISOString().slice(0, 10);
+  const preprod = `# ${path.basename(resolvedTarget)} — pre-production (P0)
+
+> Scaffolded ${today} by \`kit new --profile ${profile}\` (driver=${axes.driver}, facts=${axes.facts}, rubric=${axes.rubric}).
+> Fuller per-profile guidance lands with the profile itself (docs/design/preproduction.md covers
+> what exists so far) — this file only carries what \`kit gate\`'s story-metrics step hard-checks
+> today: the sign-off line below.
+
+## Logline
+
+> TODO — one sentence: what is this film about, and why does it exist?
+
+## Notes
+
+> TODO — anything a reviewer should know before approving: intended duration, audience, any facts
+> that will need a source once this project outgrows the \`abstract\` profile.
+
+<!--
+approved_by is the ONE thing scripts/story-metrics.mjs (via \`kit gate\`) hard-checks: no line here
+(or a placeholder name like "test"/"tbd"/"todo") blocks the gate, so nothing can be exported.
+Add exactly one line below, in this exact shape, once a human has actually looked at the plan:
+approved_by: <name> <YYYY-MM-DD>
+-->
+`;
+  mkdirSync(path.join(resolvedTarget, 'docs'), { recursive: true });
+  writeFileSync(path.join(resolvedTarget, 'docs/preproduction.md'), preprod);
+
+  // ---- 5. .gitignore ----
+  writeFileSync(
+    path.join(resolvedTarget, '.gitignore'),
+    [
+      'node_modules/',
+      'dist/',
+      'out/',
+      '.cache/', // tts/provider.mjs's content-hash synthesis cache (K3) — disposable, and its meta
+      // JSON records this machine's absolute wav path, which must never be committed.
+      'qa/*.json',
+      'qa/*.jsonl',
+      // qa/gate_skips.jsonl is the one exception: an append-only audit log of every `--skip-gate`
+      // use. Unlike gate.json/determinism.json/boundary-diff.json (regenerated every run, fine to
+      // gitignore), a skip record is a one-time event with no other trace — if it isn't committed,
+      // a fresh clone or a different machine can never see that someone bypassed the gate.
+      '!qa/gate_skips.jsonl',
+      '*.mp4',
+      '.DS_Store',
+      // I6 fix (2026-09-29 publish review): README tells users to run TTS providers with
+      // `node --env-file=.env` (an OPENAI_API_KEY/MINIMAX_API_KEY etc. would live there) — but this
+      // scaffold used to NOT gitignore `.env`, and step 6 below runs `git init` + a first commit
+      // automatically, so a user following the README verbatim could commit a real API key on their
+      // very first commit. `.env.*` also covers `.env.local`/`.env.production` etc.
+      '.env',
+      '.env.*',
+      '',
+    ].join('\n'),
+  );
+
+  // ---- 6. git init + first commit (the machine-readable "scaffold was used" proof) ----
+  function git(args) {
+    return spawnSync('git', args, { cwd: resolvedTarget, encoding: 'utf8' });
+  }
+  let gitMessage;
+  if (existsSync(path.join(resolvedTarget, '.git'))) {
+    gitMessage = 'target is already a git repo, skipped git init (existing history left alone).';
+  } else {
+    let kitVersion = 'unknown';
+    try {
+      const pkg = JSON.parse(readFileSync(path.join(KIT_PKG_DIR, 'package.json'), 'utf8'));
+      kitVersion = pkg.version ?? 'unknown';
+    } catch { /* best-effort only */ }
+    const init = git(['init', '-q']);
+    if (init.status !== 0) throw new ScaffoldError(`git init failed: ${init.stderr}`, 2);
+    git(['add', '-A']);
+    const commitMsg = `scaffold: canvas-film-kit@${kitVersion} profile=${profile}`;
+    const commit = git(['commit', '-q', '-m', commitMsg]);
+    if (commit.status !== 0) {
+      throw new ScaffoldError(`git commit failed (is git user.name/user.email configured?): ${commit.stderr}${commit.stdout}`, 2);
+    }
+    gitMessage = `git init + first commit — "${commitMsg}"`;
+  }
+
+  return { target: resolvedTarget, profile, axes, gitMessage };
+}

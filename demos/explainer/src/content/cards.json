@@ -1,0 +1,8 @@
+{
+  "cards": [
+    { "card_id": "N1-1", "n_id": "N1", "scene": "moon-phases", "zh": "月光其實係反射太陽光", "en": "Moonlight is reflected sunlight.", "hanzi": 22 },
+    { "card_id": "N2-1", "n_id": "N2", "scene": "moon-phases", "zh": "月球永遠一半向光一半背光", "en": "Half the Moon always faces the Sun.", "hanzi": 22 },
+    { "card_id": "N3-1", "n_id": "N3", "scene": "moon-phases", "fact": "C02", "zh": "地球望落去，向光比例日日唔同", "en": "From Earth, the lit fraction we see changes daily.", "hanzi": 31 },
+    { "card_id": "N4-1", "n_id": "N4", "scene": "moon-phases", "zh": "新月、上弦、滿月、下弦", "en": "New, first quarter, full, last quarter.", "hanzi": 28 }
+  ]
+}

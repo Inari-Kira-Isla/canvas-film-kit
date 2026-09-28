@@ -1,0 +1,3 @@
+# Test-only private-terms file for run-fixture-tests.mjs's release-scan suite — synthetic term only,
+# matched against scripts/__fixtures__/release-scan/bad/leak.md. Not used by a real release.
+acmecorp

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "bread-price-index",
+    "source": "canvas-film-kit fixture — entirely fictional demo dataset (no real island, no real bakery)",
+    "url": "https://example.invalid/fixture/bread-price-index",
+    "retrieved": "2026-09-28",
+    "unit": "shells/loaf",
+    "license": "CC0 (fictional demo data)",
+    "fictional": true,
+    "values": [
+      { "year": 1, "price": 10 },
+      { "year": 2, "price": 11 },
+      { "year": 3, "price": 13 },
+      { "year": 4, "price": 15 }
+    ]
+  },
+  {
+    "id": "lighthouse-bakery",
+    "source": "canvas-film-kit fixture — entirely fictional demo dataset",
+    "url": "https://example.invalid/fixture/lighthouse-bakery",
+    "retrieved": "2026-09-28",
+    "unit": "n/a",
+    "license": "CC0 (fictional demo data)",
+    "fictional": true,
+    "name": "Lighthouse Bakery",
+    "founded": "Year 1",
+    "description": "A fictional bakery used only to illustrate the price data above."
+  }
+]

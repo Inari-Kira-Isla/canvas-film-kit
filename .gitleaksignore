@@ -1,0 +1,4 @@
+# packages/kit/tts/providers/edge.mjs:44 — TRUSTED_CLIENT_TOKEN, a long-published, non-account
+# constant every community client of this unofficial Microsoft Edge TTS endpoint uses (see that
+# file's own header comment). Not a real secret — confirmed by hand, K5 release-scan.
+packages/kit/tts/providers/edge.mjs:generic-api-key:44

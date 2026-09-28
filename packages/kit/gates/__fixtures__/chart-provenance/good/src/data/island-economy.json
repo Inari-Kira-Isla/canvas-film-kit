@@ -1,0 +1,22 @@
+[
+  {
+    "id": "bread-price-index",
+    "source": "canvas-film-kit fixture — entirely fictional demo dataset",
+    "url": "https://example.invalid/fixture/bread-price-index",
+    "retrieved": "2026-09-01",
+    "unit": "MOP/loaf",
+    "license": "CC0 (fictional demo data)",
+    "fictional": true,
+    "values": [10, 12, 15, 20]
+  },
+  {
+    "id": "island-population",
+    "source": "canvas-film-kit fixture — entirely fictional demo dataset",
+    "url": "https://example.invalid/fixture/island-population",
+    "retrieved": "2026-09-01",
+    "unit": "people",
+    "license": "CC0 (fictional demo data)",
+    "fictional": true,
+    "values": [1000, 1200, 1500]
+  }
+]

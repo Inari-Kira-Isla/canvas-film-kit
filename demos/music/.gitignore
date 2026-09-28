@@ -1,0 +1,8 @@
+node_modules/
+dist/
+out/
+qa/*.json
+qa/*.jsonl
+!qa/gate_skips.jsonl
+*.mp4
+.DS_Store

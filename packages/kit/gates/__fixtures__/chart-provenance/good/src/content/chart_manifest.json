@@ -1,0 +1,4 @@
+[
+  { "scene": "bread-price", "sceneFile": "src/scenes/bread-price.ts", "component": "line-chart", "dataset_id": "bread-price-index" },
+  { "scene": "island-population", "sceneFile": "src/scenes/island-population.ts", "component": "bar-chart", "dataset_id": "island-population", "yMin": 0, "truncatedAxis": null }
+]

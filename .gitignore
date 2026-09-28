@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+*.mp4
+.DS_Store
+qa/
+public/fonts/
+fonts.lock.json
+# ...except the font-coverage gate's own good/bad fixtures — those MUST be tracked so a fresh clone
+# (not just this working tree) actually exercises the gate; the bare pattern above was silently
+# hiding them from git, which made bad/ fall through to a false "no lock file, SKIP" exit 0 in any
+# clone (see scripts/run-fixture-tests.mjs's font-coverage suite, and the 2026-09 publish review).
+!packages/kit/gates/__fixtures__/font-coverage/**/fonts.lock.json

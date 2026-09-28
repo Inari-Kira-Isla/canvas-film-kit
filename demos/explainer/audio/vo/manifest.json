@@ -1,0 +1,50 @@
+{
+  "n": [
+    {
+      "n_id": "N1",
+      "file": "N1.wav",
+      "duration_s": 4.8
+    },
+    {
+      "n_id": "N2",
+      "file": "N2.wav",
+      "duration_s": 4.8
+    },
+    {
+      "n_id": "N3",
+      "file": "N3.wav",
+      "duration_s": 6.7
+    },
+    {
+      "n_id": "N4",
+      "file": "N4.wav",
+      "duration_s": 6.1
+    }
+  ],
+  "cards": [
+    {
+      "card_id": "N1-1",
+      "n_id": "N1",
+      "start_s": 0,
+      "end_s": 4.8
+    },
+    {
+      "card_id": "N2-1",
+      "n_id": "N2",
+      "start_s": 0,
+      "end_s": 4.8
+    },
+    {
+      "card_id": "N3-1",
+      "n_id": "N3",
+      "start_s": 0,
+      "end_s": 6.7
+    },
+    {
+      "card_id": "N4-1",
+      "n_id": "N4",
+      "start_s": 0,
+      "end_s": 6.1
+    }
+  ]
+}

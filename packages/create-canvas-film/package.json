@@ -1,0 +1,28 @@
+{
+  "name": "create-canvas-film",
+  "version": "0.1.0",
+  "description": "Scaffold a new canvas-film-kit project — npx create-canvas-film <dir> --profile abstract",
+  "license": "MIT",
+  "type": "module",
+  "main": "./bin/create-canvas-film.mjs",
+  "bin": {
+    "create-canvas-film": "./bin/create-canvas-film.mjs"
+  },
+  "files": [
+    "bin",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "canvas-film-kit": "^0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/canvas-film-kit/canvas-film-kit.git",
+    "directory": "packages/create-canvas-film"
+  },
+  "homepage": "https://github.com/canvas-film-kit/canvas-film-kit#readme"
+}

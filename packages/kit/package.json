@@ -1,0 +1,51 @@
+{
+  "name": "canvas-film-kit",
+  "version": "0.1.0",
+  "description": "Deterministic, hand-drawn Canvas 2D short film toolkit — doctor/gate/export/stills/determinism/boundary-diff/fonts/new CLI.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "kit": "./bin/kit.mjs"
+  },
+  "main": "./bin/kit.mjs",
+  "files": [
+    "bin",
+    "gates",
+    "render",
+    "scripts",
+    "scaffold",
+    "audio",
+    "tts",
+    "narration",
+    "templates",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.24.0",
+    "playwright": "^1.47.0",
+    "ws": "^8.22.0",
+    "fontkit": "^2.0.4"
+  },
+  "keywords": [
+    "canvas",
+    "animation",
+    "video",
+    "deterministic",
+    "explainer",
+    "generative",
+    "render"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/canvas-film-kit/canvas-film-kit.git",
+    "directory": "packages/kit"
+  },
+  "homepage": "https://github.com/canvas-film-kit/canvas-film-kit#readme",
+  "bugs": {
+    "url": "https://github.com/canvas-film-kit/canvas-film-kit/issues"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "timing_source": "measured",
+  "fps": 30,
+  "duration_s": 10.0,
+  "total_frames": 300,
+  "n_units": [
+    {
+      "n_id": "N1",
+      "file": "N1.wav",
+      "start_s": 5.0,
+      "duration_s": 1.15
+    }
+  ],
+  "cards": [
+    {
+      "card_id": "N1-1",
+      "n_id": "N1",
+      "scene": "x",
+      "zh": "x",
+      "en": "x",
+      "hanzi": 1,
+      "start": 5.0,
+      "end": 6.15,
+      "show_start": 5.15,
+      "show_end": 6.5,
+      "contiguous_with_next": false
+    }
+  ]
+}

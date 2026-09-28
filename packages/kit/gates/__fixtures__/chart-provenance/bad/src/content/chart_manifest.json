@@ -1,0 +1,5 @@
+[
+  { "scene": "bread-price", "sceneFile": "src/scenes/bread-price.ts", "component": "line-chart", "dataset_id": "bread-price-index" },
+  { "scene": "island-population", "sceneFile": "src/scenes/island-population.ts", "component": "bar-chart", "dataset_id": "island-population", "yMin": 500, "truncatedAxis": null },
+  { "scene": "ghost", "sceneFile": "src/scenes/ghost.ts", "component": "entity-card", "dataset_id": "does-not-exist" }
+]

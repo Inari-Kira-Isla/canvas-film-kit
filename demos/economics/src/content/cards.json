@@ -1,0 +1,8 @@
+{
+  "cards": [
+    { "card_id": "N1-1", "n_id": "N1", "scene": "island-inflation", "fact": "C01", "zh": "通脹即係同一樣嘢要俾多啲錢買", "en": "Inflation means paying more for the same good over time.", "hanzi": 13 },
+    { "card_id": "N2-1", "n_id": "N2", "scene": "island-inflation", "zh": "虛構小島麵包價四年一路升", "en": "In our fictional island, bread prices rose over four years.", "hanzi": 11 },
+    { "card_id": "N3-1", "n_id": "N3", "scene": "island-inflation", "fact": "C02", "zh": "四年升咗一半，通脹約50%", "en": "Up 50% over four years (illustrative figure).", "hanzi": 10 },
+    { "card_id": "N4-1", "n_id": "N4", "scene": "island-inflation", "zh": "燈塔麵包舖：示意數據", "en": "Lighthouse Bakery — illustrative data.", "hanzi": 9 }
+  ]
+}

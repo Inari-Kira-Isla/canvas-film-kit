@@ -1,0 +1,6 @@
+{
+  "name": "fixture-good",
+  "dependencies": {
+    "canvas-film-kit": "file:../../packages/kit"
+  }
+}

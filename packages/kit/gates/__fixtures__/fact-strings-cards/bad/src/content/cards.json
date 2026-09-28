@@ -1,0 +1,6 @@
+{
+  "cards": [
+    { "card_id": "N1-1", "n_id": "N1", "scene": "moon", "zh": "月相變化週期大約係 29.5 日一次", "en": "The cycle repeats roughly every 29.5 days." },
+    { "card_id": "N1-2", "n_id": "N1", "scene": "moon", "fact": "C99", "zh": "地球比月球大好多", "en": "Earth is much bigger than the Moon." }
+  ]
+}

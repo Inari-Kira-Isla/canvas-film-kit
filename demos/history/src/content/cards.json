@@ -1,0 +1,39 @@
+{
+  "cards": [
+    {
+      "card_id": "N1-1",
+      "n_id": "N1",
+      "scene": "printing-spread",
+      "fact": "C01",
+      "zh": "活字印刷術喺德國出現",
+      "en": "Movable-type printing emerged in Germany.",
+      "hanzi": 10
+    },
+    {
+      "card_id": "N2-1",
+      "n_id": "N2",
+      "scene": "printing-spread",
+      "zh": "技術好快傳到歐洲幾個城市",
+      "en": "It quickly spread to several European cities.",
+      "hanzi": 12
+    },
+    {
+      "card_id": "N3-1",
+      "n_id": "N3",
+      "scene": "printing-spread",
+      "fact": "C02",
+      "zh": "據載印刷作坊數量大增",
+      "en": "Popular accounts say print shops grew a lot.",
+      "hanzi": 10
+    },
+    {
+      "card_id": "N4-1",
+      "n_id": "N4",
+      "scene": "printing-spread",
+      "fact": "C03",
+      "zh": "到1500年印刷術傳遍歐洲",
+      "en": "By 1500, it had spread across Europe.",
+      "hanzi": 9
+    }
+  ]
+}

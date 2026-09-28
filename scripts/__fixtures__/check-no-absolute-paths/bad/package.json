@@ -1,0 +1,6 @@
+{
+  "name": "fixture-bad",
+  "dependencies": {
+    "canvas-film-kit": "file:/Users/example-user/dev/canvas-film-kit/packages/kit"
+  }
+}

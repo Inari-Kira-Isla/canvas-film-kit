@@ -1,0 +1,6 @@
+{
+  "cards": [
+    { "card_id": "N1-1", "n_id": "N1", "scene": "history", "fact": "C01", "zh": "活字印刷術喺15世紀中傳到歐洲", "en": "Movable-type printing reached Europe in the mid-15th century." },
+    { "card_id": "N2-1", "n_id": "N2", "scene": "history", "fact": "C02", "zh": "據載當時歐洲印刷作坊數量急增", "en": "Popular accounts say the number of print shops rose sharply." }
+  ]
+}

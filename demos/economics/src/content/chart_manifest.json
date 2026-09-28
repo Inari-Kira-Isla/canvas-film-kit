@@ -1,0 +1,6 @@
+[
+  { "scene": "island-inflation", "sceneFile": "src/scenes/island-inflation.ts", "component": "line-chart", "dataset_id": "bread-price-index" },
+  { "scene": "island-inflation", "sceneFile": "src/scenes/island-inflation.ts", "component": "bar-chart", "dataset_id": "bread-price-index", "yMin": 0, "truncatedAxis": null },
+  { "scene": "island-inflation", "sceneFile": "src/scenes/island-inflation.ts", "component": "count-up", "dataset_id": "bread-price-index" },
+  { "scene": "island-inflation", "sceneFile": "src/scenes/island-inflation.ts", "component": "entity-card", "dataset_id": "lighthouse-bakery" }
+]

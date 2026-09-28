@@ -1,0 +1,122 @@
+name: CI
+
+# Design doc §9 K5 row: "ubuntu/macos/windows matrix 跑 doctor + gate + abstract demo export + 全部
+# fixture 測試". This file has NOT been run against real GitHub Actions yet (K5 batch: written and
+# validated for YAML syntax only — `actionlint` was not available on the machine that wrote it, see
+# the K5 batch notes/report for exactly what "validated" means here). Review the job below with that
+# in mind before relying on it as a merge gate.
+#
+# Every `run:` step below is pinned to `shell: bash` — GitHub's Windows runners ship Git Bash, and
+# using the same shell syntax on all three OSes is what makes one step definition actually portable
+# (a native pwsh step would need different background-process/wait syntax on Windows).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12'
+
+      # ffmpeg: design doc §2.1 — need >=6 with libx264. GitHub-hosted ubuntu-latest/macos-latest
+      # runner images already include ffmpeg (see actions/runner-images' own software manifests); the
+      # explicit installs below are a deliberate belt-and-suspenders (idempotent — a no-op if already
+      # present) rather than a bet that a future runner-image update keeps shipping it. Windows has no
+      # single universally-preinstalled ffmpeg across runner-image versions, so it always installs.
+      - name: Install ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Install ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: command -v ffmpeg >/dev/null || brew install ffmpeg
+
+      - name: Install ffmpeg (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg -y
+
+      - name: npm ci (repo root, workspaces)
+        run: npm ci
+
+      # --- Static checks (no browser needed) -------------------------------------------------
+      - name: check-no-absolute-paths
+        run: node scripts/check-no-absolute-paths.mjs .
+
+      - name: release-scan
+        # --no-gitleaks: this runner image doesn't have gitleaks installed by default. A real
+        # pre-release run (see README "Releasing") runs the full `node scripts/release-scan.mjs .`
+        # (gitleaks included) by hand, or add a `gitleaks/gitleaks-action` step here if this ever
+        # becomes a real merge gate.
+        run: node scripts/release-scan.mjs . --no-gitleaks
+
+      - name: fixture tests (every gate's own good/bad pairs)
+        run: node scripts/run-fixture-tests.mjs
+
+      - name: parity + provider self-tests
+        run: |
+          node packages/kit/narration/__tests__/parity-speech-rate.mjs
+          node packages/kit/tts/__tests__/run-all.mjs
+          node packages/kit/gates/__tests__/gate-status-classification.mjs
+
+      # --- Live-browser checks: doctor + gate + export against the abstract demo --------------
+      - name: install abstract demo deps
+        working-directory: demos/abstract
+        run: npm ci
+
+      - name: start dev server
+        working-directory: demos/abstract
+        run: |
+          npm run dev -- --port 5180 > /tmp/vite-abstract.log 2>&1 &
+          echo $! > /tmp/vite-abstract.pid
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:5180/ >/dev/null && exit 0
+            sleep 1
+          done
+          echo "dev server never came up:"; cat /tmp/vite-abstract.log; exit 1
+
+      - name: doctor (diagnostic only, always exit 0)
+        working-directory: demos/abstract
+        env:
+          FILM_URL: 'http://localhost:5180/?paused'
+        run: npm run doctor
+
+      - name: gate
+        working-directory: demos/abstract
+        env:
+          FILM_URL: 'http://localhost:5180/?paused'
+        run: npm run gate
+
+      - name: export (short — CI just proves the pipeline works end to end, not a real deliverable)
+        working-directory: demos/abstract
+        env:
+          FILM_URL: 'http://localhost:5180/?paused'
+        run: npm run export -- "$FILM_URL" out.mp4 5 24
+
+      - name: stop dev server
+        if: always()
+        run: kill "$(cat /tmp/vite-abstract.pid)" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abstract-demo-${{ matrix.os }}
+          path: |
+            demos/abstract/out.mp4
+            demos/abstract/qa/*.json
+          if-no-files-found: warn
+          retention-days: 7
