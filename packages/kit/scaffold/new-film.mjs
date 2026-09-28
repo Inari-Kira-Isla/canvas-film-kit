@@ -31,11 +31,11 @@ const TEMPLATES_DIR = path.join(KIT_PKG_DIR, 'templates', 'base');
 // I3' fix (2026-09-29 re-review, second pass) — the git spec a scaffolded project's package.json
 // depends on when `kit new`/`create-canvas-film` was itself run from an npm-installed copy of this
 // kit (see the `usesNodeModulesInstall` branch below). Points at this repo's own root (npm git deps
-// cannot target a subdirectory), pinned to the v0.1.1 tag so a scaffold made today keeps working even
+// cannot target a subdirectory), pinned to the v0.1.2 tag so a scaffold made today keeps working even
 // after a later tag changes root package.json's shape. CANVAS_FILM_KIT_GIT_SPEC lets a fork (or this
 // re-review's own local-bare-repo test, via `git config --global url.<base>.insteadOf`) override the
 // owner/tag without touching this file — unset, it defaults to the real, public release location.
-const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.1.1';
+const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.1.2';
 
 // K1 shipped `abstract` only; K2 added `music` (design doc §3/§9 K2 row — a music-video profile
 // driven by beats.json rather than a narrator or fixed cadence). K3 added `explainer`

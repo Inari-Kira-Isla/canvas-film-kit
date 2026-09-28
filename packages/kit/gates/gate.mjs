@@ -41,6 +41,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { classifyStepStatus } from './gate-status.mjs';
 
@@ -102,6 +103,16 @@ function run(cmd, args, opts = {}) {
   }
   return { code, out: out + note, ms, error: r.error, signal: r.signal };
 }
+// Resolve typescript's own CLI entry file (not the node_modules/.bin/tsc shim) so we can hand it
+// straight to `node` — see the typecheck step below for why the shim itself is unsafe here.
+function resolveTscCliScript(root) {
+  try {
+    const req = createRequire(path.join(root, 'package.json'));
+    return req.resolve('typescript/bin/tsc');
+  } catch {
+    return null;
+  }
+}
 function resolveGateScript(rel) {
   return path.join(here, rel);
 }
@@ -113,9 +124,19 @@ function resolveNarrationScript(rel) {
 }
 
 // ------------------------------------------------------------------------------------ 1. typecheck
+// Windows bug (2026-09-29 CI, run 36463774651): `node_modules/.bin/tsc` is a shell shim
+// (`tsc.cmd`/`tsc.ps1` on Windows, not a directly-executable `tsc`) — spawnSync with shell:false
+// (required by AGENTS.md §6) can't launch a .cmd file directly and fails with ENOENT before
+// typecheck ever runs, silently or not depending on how the caller treats a start failure (`run()`
+// here correctly counts it as FAIL, never PASS — but the point is not to hit this at all). Instead
+// resolve typescript's own CLI script (`typescript/bin/tsc`, a plain .js file) via `createRequire`
+// rooted at the target project's package.json, and hand it to `node` directly — identical behavior
+// on every OS, no shim, no shell needed. Falls back to `npx` only if typescript can't be resolved
+// at all (e.g. not installed), which should not happen in normal use since it's a devDependency of
+// every scaffolded project.
 {
-  const localTsc = path.join(root, 'node_modules', '.bin', 'tsc');
-  const r = existsSync(localTsc) ? run(localTsc, ['--noEmit']) : run('npx', ['--no-install', 'tsc', '--noEmit']);
+  const tscCliScript = resolveTscCliScript(root);
+  const r = tscCliScript ? run(process.execPath, [tscCliScript, '--noEmit']) : run('npx', ['--no-install', 'tsc', '--noEmit']);
   record('typecheck', r.code === 0 ? 'PASS' : 'FAIL', r.out || (r.error ? String(r.error) : ''), r.ms);
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "canvas-film-kit-monorepo",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deterministic, hand-drawn Canvas 2D short films from code — monorepo (kit + scaffolder + templates + demos).",
   "license": "MIT",
   "type": "module",
