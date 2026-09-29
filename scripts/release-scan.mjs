@@ -112,6 +112,7 @@ const ALLOWLIST = [
   { file: 'packages/kit/tts/__tests__/run-all.mjs', category: 'secret', reason: 'deliberately fake key (design doc §4.2: "有一個測試用假 key 跑 provider 失敗路徑") used to test that a rejected credential never echoes back in stdout/stderr — not a real key' },
   { file: 'scripts/release-scan.mjs', category: 'local-path', reason: 'this file documents the literal path patterns it bans (e.g. "/Users/", "~/Projects") in its own regex source and comments — that is the scanner explaining itself, not a leak. It contains NO brand/identity literals any more (see 2026-09-29 header note), so no other category needs an entry here.' },
   { file: 'packages/kit/scaffold/new-film.mjs', category: 'identity', reason: '"scaffold@canvas-film-kit.invalid" is a synthetic fallback git-commit-author email under the reserved .invalid TLD (RFC 2606) — used ONLY for the scaffold\'s own first commit when no real git identity is configured on the machine, never a real person\'s address.' },
+  { file: 'packages/kit/scaffold/__tests__/scaffold-git-identity.mjs', category: 'identity', reason: 'test asserts the same synthetic .invalid fallback email (RFC 2606) used by new-film.mjs' },
   { file: 'scripts/release-scan.mjs', category: 'identity', reason: 'this ALLOWLIST array\'s own reason string above quotes the synthetic fallback email literally (to describe exactly which finding it exempts on new-film.mjs) — the scanner explaining itself, not a leak.' },
 ];
 // This script's OWN bad-fixture directory (used by `kit gate`-style self-tests, see
