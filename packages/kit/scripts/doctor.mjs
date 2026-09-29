@@ -80,7 +80,7 @@ let usedChannel = 'unknown';
     await browser.close();
     report('browser-launch', 'PASS', `launched via ${usedChannel === 'chrome' ? 'system Chrome' : 'Playwright bundled Chromium'} (platform=${process.platform}, gpu-flags=${gpuArgs().join(' ')})`);
     if (/swiftshader|llvmpipe|software/i.test(renderer)) {
-      report('gpu-renderer', 'WARN', `software renderer ("${renderer}") — rendering will be correct but slow; consider \`kit export --scale 0.5\` for previews`);
+      report('gpu-renderer', 'WARN', `software renderer ("${renderer}") — rendering will be correct but slow; consider a lower fps for a preview render, e.g. \`kit export <url> <out.mp4> <dur> 12\` (there is no --scale flag)`);
     } else {
       report('gpu-renderer', 'PASS', renderer);
     }

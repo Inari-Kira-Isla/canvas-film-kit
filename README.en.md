@@ -55,7 +55,7 @@ This kit is **not published to the npm registry** — install straight from GitH
 [`docs/design/why-file-dependency.md`](docs/design/why-file-dependency.md)).
 
 ```bash
-npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.1.2 new my-film --profile explainer
+npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.0 new my-film --profile explainer
 cd my-film
 npm install
 npm run dev              # leave this terminal running
@@ -77,6 +77,11 @@ The scaffolded project already ships example content that passes `gate` — exce
 > root, then scaffold with `node packages/kit/bin/kit.mjs new ../my-film --profile explainer`. A
 > project scaffolded this way points back at your local clone (a `file:` dependency) — handy if
 > you're starting several films and don't want to re-fetch from GitHub every time.
+
+## Making a film with Claude Code
+
+This repo ships a Claude Code skill: [`.claude/skills/canvas-film/`](.claude/skills/canvas-film/SKILL.md). In Claude Code, ask to "make an explainer / history film / economics film / music video" and it runs a multi-agent workflow: five kickoff questions → you approve the storyboard (you always write `approved_by` yourself) → scenes built in parallel or in order → `npm run gate` → an independent review by an agent that didn't build the film, scored with the profile's table → export → retro.
+To use it outside this repo, copy the whole `canvas-film/` folder into your Claude Code global skills directory (see Claude Code's own docs for where that lives on your machine). Codex and Cursor users can follow the same phases by hand via [AGENTS.md](AGENTS.md) §7.
 
 ## The five profiles
 
@@ -215,7 +220,8 @@ of truth, so an AI coding agent can safely edit it" — a GUI is explicitly out 
 
 **Rendering is slow — why?** `kit doctor` tells you which GPU renderer is actually active. Seeing
 `SwiftShader`/`llvmpipe` (software rendering — common in Docker or a GPU-less CI runner) means slow
-is expected; use `export --scale 0.5` for a preview-quality render.
+is expected. There is no `--scale` flag in this release; for a faster preview, lower the fps instead,
+e.g. `kit export <url> <out.mp4> <dur> 12`.
 
 **Using an AI coding agent (Claude Code/Codex/Cursor) to build a film?** Read [AGENTS.md](AGENTS.md)
 — the rules any agent working in this codebase must follow (`render(t)` must be pure, no

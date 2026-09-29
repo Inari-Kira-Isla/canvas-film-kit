@@ -42,7 +42,7 @@
 [`docs/design/why-file-dependency.md`](docs/design/why-file-dependency.md)）。
 
 ```bash
-npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.1.2 new my-film --profile explainer
+npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.0 new my-film --profile explainer
 cd my-film
 npm install
 npm run dev              # 開住一個 terminal 唔好關
@@ -59,6 +59,11 @@ npm run export            # 會自己先跑一次 gate，唔過唔出片
 `kit new` 起好嘅專案已經有一份會過 gate 嘅示範內容——但 `docs/preproduction.md` 入面嘅 `approved_by:` 一行係佔位字，你要自己填先過到 gate（見下面「gate 同 `approved_by`」）。
 
 > **另一個做法（唔使每次都上網下載）**：`git clone` 呢個 repo 落嚟，喺 repo 根目錄 `npm install` 一次，之後用 `node packages/kit/bin/kit.mjs new ../my-film --profile explainer` 起新片——呢個做法起出嚟嘅專案會指返去你本機嗰個 clone（`file:` 依賴），適合會不斷起多個片、唔想每次都重新拉一次 GitHub 嘅情況。
+
+## 用 Claude Code 做片
+
+呢個 repo 自帶一個 Claude Code skill：[`.claude/skills/canvas-film/`](.claude/skills/canvas-film/SKILL.md)。喺 Claude Code 講「做教學片／歷史片／經濟片／MV」，佢會照一條多 agent 流程行：開工五問 → 你批分鏡（`approved_by` 一定係你自己簽）→ 場景並行／串行 → `npm run gate` → 由一個冇參與製作嘅 agent 獨立覆檢（跟 profile 評分表）→ 出片 → 回顧。
+想喺呢個 repo 以外都用得到，將成個 `canvas-film/` 資料夾 copy 去你 Claude Code 嘅 global skills 資料夾（實際路徑睇 Claude Code 官方文件）。Codex／Cursor 用戶可以照 [AGENTS.md](AGENTS.md) §7 手動行同一套流程。
 
 ## 五種 profile
 
@@ -156,7 +161,7 @@ scripts/                     → repo 級工具（release-scan、路徑檢查、
 
 **點解冇 GUI／時間軸編輯器？** 呢個 kit 嘅賣點正正係「code 係 single source of truth，agent 照住規則改得放心」——GUI 唔喺呢個版本嘅計劃內（見 `docs/design/`「今次唔做」）。
 
-**渲染好慢點算？** `kit doctor` 會話你知而家用緊邊隻 GPU renderer——見到 `SwiftShader`/`llvmpipe`（軟件渲染，例如喺 Docker 或者冇 GPU 嘅 CI）就預咗慢，用 `export --scale 0.5` 做預覽級渲染。
+**渲染好慢點算？** `kit doctor` 會話你知而家用緊邊隻 GPU renderer——見到 `SwiftShader`/`llvmpipe`（軟件渲染，例如喺 Docker 或者冇 GPU 嘅 CI）就預咗慢。呢個版本冇 `--scale` flag，想快啲睇預覽可以降 fps，例如 `kit export <url> <out.mp4> <dur> 12`。
 
 **識用 AI coding agent（Claude Code/Codex/Cursor）嚟起片？** 讀 [AGENTS.md](AGENTS.md)——入面係畀 agent 讀嘅鐵律（`render(t)` 要純函數、禁 `Math.random`/`Date.now`、色/時間各自一個家、`approved_by` 人手簽名唔准代填）。`CLAUDE.md` 已經 `@AGENTS.md` 咗，Claude Code 會自動讀到。
 

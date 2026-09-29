@@ -23,9 +23,29 @@ comment (`packages/kit/gates/story-metrics.mjs`) for the full threat model, came
 calibration anchors the pass/fail bands are set against. A film can be all-green here and still be
 rejected by a human reviewer; a yellow band is a prompt to look, never an automatic verdict.
 
+## What exists today (beyond the sign-off line)
+
+The structured five-question kickoff, and a human-review rubric table per profile (`abstract` /
+`music` / `explainer` / `history` / `economics`), now ship as part of the `.claude/skills/canvas-film/`
+workflow skill every `kit new`/`create-canvas-film` scaffold copies in:
+
+- [`references/kickoff-questions.md`](../../.claude/skills/canvas-film/references/kickoff-questions.md)
+  — the five questions, asked before any scene is written, and written into the scaffold's own
+  `docs/preproduction.md` → `## Kickoff` section (see `scaffold/new-film.mjs`). They fix the
+  protagonist, driver, facts strength, sample length, and aspect ratio — and the profile itself —
+  before the storyboard exists.
+- [`references/rubrics.md`](../../.claude/skills/canvas-film/references/rubrics.md) — the P5
+  fresh-context review rubric table, one row set per profile.
+- `AGENTS.md` §7 covers the rest of the phase order (kickoff → storyboard → build → gate →
+  independent review → retro) and both human-only sign-off lines (`approved_by_kickoff:` for
+  direction, `approved_by:` for the storyboard — see `kickoff-questions.md`'s own "Sign-off"
+  section for why answering the five questions does not unlock `kit gate`).
+
+All five named profiles (`abstract`, `music`, `explainer`, `history`, `economics`) are scaffoldable
+today — see `profiles.md`'s "Shipping status" table for what each one's axes and gates actually check.
+
 ## What's not here yet (later batches)
 
-A fuller pre-production template — a structured five-question kickoff, a per-profile information
-budget, a storyboard checklist, and a human-review rubric table per profile (`abstract` vs `music`
-vs `explainer`/`history`/`economics`) — lands alongside the profiles themselves (K2-K4; see
-`profiles.md`). K1 ships only what `abstract` needs to reach a real, gate-passing MP4.
+A per-profile information *budget* (how many facts/numbers a given duration can carry before it
+reads as a spec sheet) and a storyboard checklist beyond the rubric table are still open — see
+`profiles.md`'s "Adding a profile" section for the shape later work here is expected to take.

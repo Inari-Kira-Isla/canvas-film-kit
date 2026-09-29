@@ -13,7 +13,7 @@
 // hand-copy of templates/) was actually used.
 //
 // Exit codes: 0 = scaffolded, 1 = target dir problem / bad args, 2 = internal error (copy/git failed)
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,14 +28,34 @@ const KIT_PKG_DIR = path.resolve(HERE, '..'); // .../packages/kit
 // packages/kit/ and ships as part of the published package for exactly this reason.
 const TEMPLATES_DIR = path.join(KIT_PKG_DIR, 'templates', 'base');
 
+// AGENTS.md / CLAUDE.md / .claude/skills/canvas-film/ (the workflow skill + its references) have
+// exactly ONE source of truth: this repo's own root — the same files a contributor working on the
+// kit itself reads, and the same ones Claude Code auto-loads in this repo. A scaffolded project gets
+// a COPY of them (below, in scaffold()), not a second hand-maintained set living under templates/ —
+// two copies of agent-guidance prose are two copies that silently drift the first time one gets
+// edited and the other doesn't (`packages/kit/scaffold/__tests__/scaffold-agent-files.mjs` asserts
+// the copy is byte-identical to this source, which is what would catch that drift if it ever crept
+// back in). This only resolves when the whole repo is on disk next to packages/kit/ — true for both
+// ways `kit new`/`create-canvas-film` are actually distributed today (a monorepo dev checkout, or a
+// full `npx --yes github:...#tag` clone — see RELEASE_GIT_SPEC's own comment below: there is no
+// npm-registry-published, packages/kit-only install yet). If that ever changes, copying these files
+// degrades to a WARN + skip (see AGENT_FILES below) — never a hard scaffold failure, since none of
+// these files are inputs `kit gate` itself reads.
+const REPO_ROOT = path.resolve(KIT_PKG_DIR, '..', '..');
+const AGENT_FILES = [
+  { from: path.join(REPO_ROOT, 'AGENTS.md'), to: 'AGENTS.md', kind: 'file' },
+  { from: path.join(REPO_ROOT, 'CLAUDE.md'), to: 'CLAUDE.md', kind: 'file' },
+  { from: path.join(REPO_ROOT, '.claude', 'skills', 'canvas-film'), to: path.join('.claude', 'skills', 'canvas-film'), kind: 'dir' },
+];
+
 // I3' fix (2026-09-29 re-review, second pass) — the git spec a scaffolded project's package.json
 // depends on when `kit new`/`create-canvas-film` was itself run from an npm-installed copy of this
 // kit (see the `usesNodeModulesInstall` branch below). Points at this repo's own root (npm git deps
-// cannot target a subdirectory), pinned to the v0.1.2 tag so a scaffold made today keeps working even
+// cannot target a subdirectory), pinned to the v0.2.0 tag so a scaffold made today keeps working even
 // after a later tag changes root package.json's shape. CANVAS_FILM_KIT_GIT_SPEC lets a fork (or this
 // re-review's own local-bare-repo test, via `git config --global url.<base>.insteadOf`) override the
 // owner/tag without touching this file — unset, it defaults to the real, public release location.
-const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.1.2';
+const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.2.0';
 
 // K1 shipped `abstract` only; K2 added `music` (design doc §3/§9 K2 row — a music-video profile
 // driven by beats.json rather than a narrator or fixed cadence). K3 added `explainer`
@@ -160,6 +180,30 @@ export function scaffold({ target, profile }) {
     if (changed) writeFileSync(file, src);
   }
 
+  // ---- 2.6. AGENTS.md / CLAUDE.md / .claude/skills/canvas-film/ (single source: repo root) ----
+  // See AGENT_FILES's own comment above for why this copies rather than duplicating a second set
+  // under templates/. Best-effort: a project scaffolded from a hypothetical future packages/kit-only
+  // npm install (not how v0.1/v0.2 are distributed) would find nothing at REPO_ROOT — WARN and skip
+  // rather than fail the whole scaffold over files `kit gate` never reads.
+  const missingAgentSource = AGENT_FILES.find((f) => !existsSync(f.from));
+  if (missingAgentSource) {
+    console.error(
+      `kit new: WARN: ${path.relative(REPO_ROOT, missingAgentSource.from)} not found at ${missingAgentSource.from} — ` +
+        `skipping AGENTS.md/CLAUDE.md/.claude/skills copy (this kit install doesn't have the full repo on disk; ` +
+        `see scaffold/new-film.mjs's AGENT_FILES comment). The scaffolded project will not have agent guidance files.`,
+    );
+  } else {
+    for (const { from, to, kind } of AGENT_FILES) {
+      const dest = path.join(resolvedTarget, to);
+      if (kind === 'dir') {
+        cpSync(from, dest, { recursive: true });
+      } else {
+        mkdirSync(path.dirname(dest), { recursive: true });
+        copyFileSync(from, dest);
+      }
+    }
+  }
+
   // ---- 3. package.json (wires this scaffold to the kit install that scaffolded it) ----
   // K5: a `node_modules` segment anywhere in KIT_PKG_DIR means this kit was consumed as an installed
   // npm dependency (registry install, tarball install, or an npm-workspaces symlink into some OTHER
@@ -233,6 +277,41 @@ export function scaffold({ target, profile }) {
 ## Logline
 
 > TODO — one sentence: what is this film about, and why does it exist?
+
+## Kickoff
+
+> Answer these five before writing any scene — see
+> [\`kickoff-questions.md\`](../.claude/skills/canvas-film/references/kickoff-questions.md) for the
+> full guide (recommended defaults, what rework each answer prevents). Put the user's own words
+> under each question; the agent asks, the human answers.
+
+**Q1 — What is this film mainly about?**
+
+> TODO
+
+**Q2 — What should the film move with — a song, a voice, or just the pictures?**
+
+> TODO (this profile's default: driver=${axes.driver})
+
+**Q3 — Will numbers, dates, or names appear on screen? If so, where do they come from?**
+
+> TODO (this profile's default: facts=${axes.facts})
+
+**Q4 — How long a sample first, and when? What's the longest the full film can be?**
+
+> TODO
+
+**Q5 — Where will people watch it — phone held upright, or wide on a laptop/TV?**
+
+> TODO
+
+<!--
+approved_by_kickoff records that the DIRECTION (the five answers above) is approved — filled in by
+the human, never the agent, exactly like approved_by below (see AGENTS.md §4 / kickoff-questions.md's
+own "Sign-off" section). Add exactly one line below, in this exact shape, once the user has actually
+answered all five:
+approved_by_kickoff: <name> <YYYY-MM-DD>
+-->
 
 ## Notes
 

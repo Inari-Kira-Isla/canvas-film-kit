@@ -72,6 +72,7 @@ jobs:
           node packages/kit/narration/__tests__/parity-speech-rate.mjs
           node packages/kit/tts/__tests__/run-all.mjs
           node packages/kit/gates/__tests__/gate-status-classification.mjs
+          node packages/kit/scaffold/__tests__/scaffold-agent-files.mjs
 
       # --- Live-browser checks: doctor + gate + export against the abstract demo --------------
       - name: install abstract demo deps

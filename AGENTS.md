@@ -104,6 +104,23 @@ why." Do not look for a third way around `approved_by:` that avoids leaving that
 - `spawnSync`/`spawn` calls must use `shell: false` and pass args as an array, never a shell string —
   this kit runs on Windows too, where `&&` and `rm` are not valid shell syntax.
 
+## 7. The film-making workflow (phases, sign-offs, review)
+
+The rules above say what code must look like. The *order of work* (kickoff questions, human
+sign-offs, parallel vs serial scenes, gate, independent review, retro) lives in
+[`.claude/skills/canvas-film/SKILL.md`](.claude/skills/canvas-film/SKILL.md). Claude Code loads it as
+a skill. Codex, Cursor, and other agents should read it and follow the phases by hand. The points
+that don't depend on your tool:
+
+- Ask the five kickoff questions ([`references/kickoff-questions.md`](.claude/skills/canvas-film/references/kickoff-questions.md))
+  before writing any scene. Both `approved_by_kickoff:` and `approved_by:` are written by the human
+  (§4).
+- The P5 review is done by a **fresh context** that did not build the film. It re-runs the gate
+  commands itself and scores the film with the profile's table in
+  [`references/rubrics.md`](.claude/skills/canvas-film/references/rubrics.md). Any item below 3 means REJECT.
+- If your tool has only one model or one session, keep the phases anyway, and do the review in a new
+  session that sees only the repo.
+
 ---
 
 If something in this file seems to conflict with what a human in the conversation is asking for,

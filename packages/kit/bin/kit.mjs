@@ -4,6 +4,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PROFILES as PROFILES_HELP } from '../scaffold/new-film.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url)); // .../packages/kit/bin
 const PKG_DIR = path.resolve(here, '..');
@@ -114,7 +115,7 @@ switch (sub) {
         'kit: unknown or missing subcommand' + (sub ? ` "${sub}"` : ''),
         '',
         'Usage: kit <subcommand> [args...]',
-        '  new <dir> --profile <abstract>   scaffold a new film project',
+        `  new <dir> --profile <${PROFILES_HELP.join('|')}>   scaffold a new film project`,
         '  doctor                           check Node/ffmpeg/browser/GPU/fonts',
         '  gate [--url <url>] [--no-server-checks]   run every mechanical pre-export check',
         '  export [url] [out.mp4] [dur] [fps] [--audio <path>] [--skip-gate "<reason>"]   run gate then render an MP4',

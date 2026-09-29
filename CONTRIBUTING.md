@@ -63,6 +63,7 @@ node scripts/check-no-absolute-paths.mjs .
 node scripts/release-scan.mjs .
 node packages/kit/narration/__tests__/parity-speech-rate.mjs   # SKIPs cleanly without a local Python copy
 node packages/kit/tts/__tests__/run-all.mjs
+node packages/kit/scaffold/__tests__/scaffold-agent-files.mjs
 ```
 
 Full gate+export on one of the shipped demos (see each `demos/<profile>/` for the exact commands) is
