@@ -24,16 +24,25 @@
 //   5b. beat-hit-rate.mjs         — music only, never FAILs (WARN only)
 //   5c. timing-source-check/speech-rate/onset-check — narration-driven profiles (explainer/history/
 //                                    economics — K4 widened this from explainer-only)
+//   5g. claim-usage.mjs           — PROFILE !== 'abstract' AND research/fact_table.md exists, same
+//                                    gating as step 5 (K6) — every declared claim must be used
+//                                    somewhere, not just every USED claim declared (fact-strings-check
+//                                    already covers that direction).
 //   5d. history-sources-check.mjs / portrait-manifest.mjs — history only (K4)
 //   5e. chart-provenance.mjs      — economics only (K4)
 //   5f. font-coverage.mjs         — all profiles, once fonts.lock.json exists (K4)
 //   6. determinism.mjs            — needs a running dev/preview server (Playwright + real Chrome)
 //   7. boundary-diff.mjs          — same server
+//   8. font-size-check.mjs        — narration-driven profiles (explainer/history/economics — K6),
+//                                    once qa/font-size-check.config.json exists. Needs the SAME
+//                                    server as steps 6/7 (captures a real still via scripts/stills.mjs).
+//   9. audio-diag.mjs             — narration-driven profiles, once audio/mix.wav exists (the file
+//                                    `narration/build-mix.mjs` writes — K6).
 //
 // determinism/boundary-diff need a real page. Pass --url <url> or set FILM_URL; gate.mjs tries to
 // reach it with a short fetch first — if unreachable, both steps are marked FAIL (not silently
 // SKIPPED: missing evidence is a failure, per the whole point of this script existing).
-// --no-server-checks explicitly demotes 6/7 to SKIP (documented opt-out, e.g. CI without a browser)
+// --no-server-checks explicitly demotes 6/7/8 to SKIP (documented opt-out, e.g. CI without a browser)
 // — every use of this flag is written into qa/gate.json so a reviewer can see it was used.
 //
 // Usage: node gate.mjs [--url <url>] [--no-server-checks]
@@ -263,6 +272,22 @@ const NARRATION_PROFILES = ['explainer', 'history', 'economics'];
   }
 }
 
+// ------------------------------------------------------------------------------------ 5g. claim-usage (K6)
+// Same profile/fact_table gating as fact-strings-check (step 5) — both read research/fact_table.md,
+// so both SKIP together until that file exists. fact-strings-check.mjs already fails a `// fact:`/
+// `"fact"` tag that points at a claim_id nobody declared; this checks the opposite drift: a claim
+// declared in the table but referenced NOWHERE in src (a stale citation nobody removed after a cut).
+{
+  if (profile === 'abstract') {
+    record('claim-usage', 'SKIP', `PROFILE="${profile}" has no facts budget, not run`, 0);
+  } else if (!existsSync(factTable)) {
+    record('claim-usage', 'SKIP', `${path.relative(root, factTable)} does not exist yet — run once it does`, 0);
+  } else {
+    const r = run('node', [resolveGateScript('claim-usage.mjs'), 'src', factTable]);
+    record('claim-usage', r.code === 0 ? 'PASS' : 'FAIL', r.out, r.ms);
+  }
+}
+
 // -------------------------------------------------------------------------------- 5d. history profile (K4)
 // history-only: source-tier + disputed-wording check, and the real-person-portrait manifest check
 // (design doc §3.1 "history"). Both SKIP cleanly until their own input file exists — same "grows
@@ -340,11 +365,14 @@ async function serverReachable(url) {
   }
 }
 
+// `reachable` is hoisted (not block-scoped) so step 8 (font-size-check, below) can reuse the same
+// server-probe result instead of probing FILM_URL a second time.
+let reachable = false;
 if (noServerChecks) {
   record('determinism', 'SKIP', '--no-server-checks explicitly given (every use of this flag is recorded in qa/gate.json)', 0);
   record('boundary-diff', 'SKIP', '--no-server-checks explicitly given', 0);
 } else {
-  const reachable = await serverReachable(FILM_URL);
+  reachable = await serverReachable(FILM_URL);
   if (!reachable) {
     const msg = `${FILM_URL} is unreachable — no dev/preview server running? This is a FAIL, not a SKIP: no evidence means it does not count as passed (use --no-server-checks to explicitly skip, or --url to point at the right place)`;
     record('determinism', 'FAIL', msg, 0);
@@ -357,6 +385,76 @@ if (noServerChecks) {
     {
       const r = run('node', [resolveRuntimeScript('boundary-diff.mjs'), FILM_URL, path.join(root, 'qa/boundary-diff.json')], { timeout: SERVER_STEP_TIMEOUT_MS });
       record('boundary-diff', r.code === 0 ? 'PASS' : 'FAIL', r.out, r.ms);
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------------ 8. font-size-check (K6)
+// narration-driven profiles only (explainer/history/economics — the profiles that burn a caption
+// plate onto the frame). Config-driven: a project declares WHICH moment(s) + screen region(s) to
+// check in qa/font-size-check.config.json (an array of `{ "t": number, "region": "x,y,w,h",
+// "originalWidth"?: number, "minZhPxAt1920"?: number }`) once it actually has captions on screen to
+// check — a fresh scaffold has none yet, so this SKIPs (not FAILs) until that config exists, same
+// "SKIP until the input exists, then really run" contract as fact-strings-check/claim-usage above.
+// Needs the SAME running dev/preview server as determinism/boundary-diff (captures a real still via
+// scripts/stills.mjs) — `--no-server-checks` or an unreachable FILM_URL SKIPs/FAILs it exactly the
+// way it does those two.
+{
+  const configFile = path.join(root, 'qa/font-size-check.config.json');
+  if (!NARRATION_PROFILES.includes(profile)) {
+    record('font-size-check', 'SKIP', `PROFILE="${profile}" is not narration-driven (${NARRATION_PROFILES.join('/')}) — no burned-in caption plate to measure`, 0);
+  } else if (!existsSync(configFile)) {
+    record('font-size-check', 'SKIP', `${path.relative(root, configFile)} does not exist yet — no caption screen region declared, run once it does`, 0);
+  } else if (noServerChecks) {
+    record('font-size-check', 'SKIP', '--no-server-checks explicitly given (needs a real render to measure ink height from)', 0);
+  } else if (!reachable) {
+    record('font-size-check', 'FAIL', `${FILM_URL} is unreachable, but ${path.relative(root, configFile)} already exists — no evidence means it does not count as passed`, 0);
+  } else {
+    let entries;
+    try {
+      entries = JSON.parse(readFileSync(configFile, 'utf8'));
+    } catch (e) {
+      record('font-size-check', 'FAIL', `${configFile} is not valid JSON: ${e.message}`, 0);
+      entries = null;
+    }
+    if (entries) {
+      const stillsDir = path.join(root, 'qa/font-size-stills');
+      const times = entries.map((e) => e.t).join(',');
+      const shotR = run('node', [resolveRuntimeScript('stills.mjs'), FILM_URL, stillsDir, times]);
+      if (shotR.code !== 0) {
+        record('font-size-check', 'FAIL', `stills.mjs could not capture a still: ${shotR.out}`, shotR.ms);
+      } else {
+        let out = '';
+        let anyFail = false;
+        for (const e of entries) {
+          const stillPath = path.join(stillsDir, `t${e.t.toFixed(2).padStart(5, '0')}.png`);
+          const args = [resolveGateScript('font-size-check.mjs'), stillPath, '--region', e.region];
+          if (e.originalWidth) args.push('--original-width', String(e.originalWidth));
+          if (e.minZhPxAt1920) args.push('--min-zh-px-at-1920', String(e.minZhPxAt1920));
+          const r = run('node', args);
+          out += `--- t=${e.t} region=${e.region} ---\n${r.out}\n`;
+          if (r.code !== 0) anyFail = true;
+        }
+        record('font-size-check', anyFail ? 'FAIL' : 'PASS', out, shotR.ms);
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------------------------ 9. audio-diag (K6)
+// narration-driven profiles only. Runs against `audio/mix.wav` — the FINAL mixed narration(+music)
+// track `narration/build-mix.mjs` writes. A fresh project (or one still using per-line TTS output with
+// no final mix yet) SKIPs — this is a delivery-stage gate, not a per-line one.
+{
+  if (!NARRATION_PROFILES.includes(profile)) {
+    record('audio-diag', 'SKIP', `PROFILE="${profile}" is not narration-driven (${NARRATION_PROFILES.join('/')}) — no narration mix to measure`, 0);
+  } else {
+    const mixPath = path.join(root, 'audio/mix.wav');
+    if (!existsSync(mixPath)) {
+      record('audio-diag', 'SKIP', `${path.relative(root, mixPath)} does not exist yet — run \`kit tts build\` (or narration/build-mix.mjs) first`, 0);
+    } else {
+      const r = run('node', [resolveGateScript('audio-diag.mjs'), mixPath]);
+      record('audio-diag', r.code === 0 ? 'PASS' : 'FAIL', r.out, r.ms);
     }
   }
 }

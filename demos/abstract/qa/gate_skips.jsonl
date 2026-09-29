@@ -1,0 +1,2 @@
+{"ts":"2026-09-28T16:45:03.380Z","reason":"manual I4 duration-fallback repro test","url":"http://localhost:5173/?paused","out":"/tmp/abstract-test-export.mp4"}
+{"ts":"2026-09-28T16:46:49.163Z","reason":"manual explicit-override repro test","url":"http://localhost:5173/?paused","out":"/tmp/abstract-test-export2.mp4"}

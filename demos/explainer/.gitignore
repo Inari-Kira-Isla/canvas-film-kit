@@ -5,5 +5,9 @@ out/
 qa/*.json
 qa/*.jsonl
 !qa/gate_skips.jsonl
+# qa/font-size-check.config.json (K6) is authored PROJECT CONFIG (which on-screen caption region to
+# measure, see gates/font-size-check.mjs) — it MUST be tracked so a fresh clone actually exercises
+# that gate instead of SKIPping forever for want of a config file.
+!qa/font-size-check.config.json
 *.mp4
 .DS_Store

@@ -22,6 +22,15 @@ claim about how many print shops appeared, and the state of things by 1500.
   (placeholder tone WAVs pre-placed at `audio/vo/N{1..4}.wav`, matching real target durations for
   each line — a real project replaces these 4 files with actual recorded/synthesized speech and
   re-runs the same command).
+- `audio/vo/N{1..4}.wav` (K6) are a 3-tone (300/1200/3000Hz) broadband placeholder — the original
+  single-tone placeholder concentrated almost all of its energy under ~300Hz, which is honest about
+  being "not real speech" but also made `gates/audio-diag.mjs`'s 300Hz-4kHz clarity-band floor fail
+  for a reason that had nothing to do with narration content. Each replacement file keeps the EXACT
+  SAME duration and zero-silence onset as the file it replaces (verified against `measure-onset.mjs`
+  before and after), so `manifest.json`/`timeline.json`/onset-check/speech-rate are all untouched —
+  only the placeholder's own spectral shape changed. `audio/mix.wav` is then loudness-mastered to
+  ~-15 LUFS integrated (`volume=+9.6dB` on `narration/build-mix.mjs`'s output), same as the other
+  narration-driven demos.
 - Components used: `src/components/caption-plate.ts`, `chapter-card.ts`, `year-axis.ts` (branded
   `Year` — a SEPARATE coordinate system from narration seconds), `map-route.ts` (schematic only, the
   mandatory "示意" badge is baked into the component, never optional), `silhouette.ts` (a generic

@@ -42,7 +42,7 @@
 [`docs/design/why-file-dependency.md`](docs/design/why-file-dependency.md)）。
 
 ```bash
-npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.2 new my-film --profile explainer
+npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.3 new my-film --profile explainer
 cd my-film
 npm install
 npm run dev              # 開住一個 terminal 唔好關

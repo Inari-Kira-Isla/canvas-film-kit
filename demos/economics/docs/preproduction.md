@@ -19,6 +19,9 @@ data) via `source-footer.ts`.
 
 - Duration ~27.4s @ 30fps, 1920x1080. Palette: `paper-day` preset (`src/theme.ts`, unmodified).
 - Narration: 4 N units (`content/vo_script.json`), synthesized via `kit tts build --provider none`.
+- `audio/mix.wav` (K6) is loudness-mastered to ~-15 LUFS integrated (a flat `volume=+11.4dB` applied
+  to `narration/build-mix.mjs`'s own output) so `gates/audio-diag.mjs` measures a real delivery-ready
+  track rather than the raw, unmastered placeholder level — gain only, no effect on timing.
 - Components used: `caption-plate.ts`, `chapter-card.ts`, `components/charts/{line,bar}.ts`,
   `count-up.ts` (pure function of `t` — see that file's own header on why it must never be a rAF
   accumulator), `entity-card.ts`, `source-footer.ts` (the ONE component that renders the mandatory

@@ -94,10 +94,22 @@ export const provider = {
             words.push({ text: w.word, start: w.time_begin / 1000, end: w.time_end / 1000 });
           }
         }
-      } catch {
-        words = undefined; // subtitle fetch failing degrades to no word timing, never a hard fail —
-        // the audio itself already synthesized successfully.
+      } catch (e) {
+        // K6 fix: this used to silently set words=undefined with NO message at all — a caller had no
+        // way to tell "MiniMax genuinely has no word timing for this request" apart from "the fetch
+        // broke", and downstream (tts/build.mjs) falls back to the WHOLE FILE's ffprobe duration as
+        // speech_len, which is longer than actual speech (it includes any lead/trail silence) and so
+        // deflates every measured chars/sec figure without saying so. This provider REQUESTED word
+        // timing (subtitle_enable + subtitle_type:'word' above) specifically so it would normally have
+        // it — losing it here is a real degradation, not a provider limitation like `system`/`none`
+        // (which never produce word timing by design, see those files' own headers), so it is WARNed
+        // loud on stderr rather than swallowed.
+        words = undefined;
+        console.error(`tts provider "minimax": WARN — fetched subtitle_file but could not parse word timestamps (${e.message}); falling back to this file's own ffprobe duration as speech_len, which will UNDER-count actual speech rate if there is any lead/trail silence.`);
       }
+    } else {
+      words = undefined;
+      console.error('tts provider "minimax": WARN — API response had no subtitle_file (word timing) even though subtitle_enable was requested; falling back to this file\'s own ffprobe duration as speech_len, which will UNDER-count actual speech rate if there is any lead/trail silence.');
     }
     const durationSec = words?.length ? words[words.length - 1].end : undefined;
     if (durationSec === undefined) {

@@ -26,6 +26,10 @@ last quarter).
   (placeholder tone WAVs pre-placed at `audio/vo/N{1..4}.wav`, matching the durations these captions
   are timed to — a real project replaces these 4 files with actual recorded/synthesized speech and
   re-runs the same command; nothing else about the pipeline changes).
+- `audio/mix.wav` (K6) is loudness-mastered to ~-15 LUFS integrated (a flat `volume=+10.78dB` applied
+  to `narration/build-mix.mjs`'s own output) so `gates/audio-diag.mjs` measures a real delivery-ready
+  track rather than the raw, unmastered placeholder level — this only changes overall loudness, never
+  timing, so it does not touch `audio/vo/*`, `manifest.json`, or `timeline.json`.
 - Components used: `src/components/caption-plate.ts` (bilingual burned caption), `src/components/
   step-badge.ts` (new/first-quarter/full/last-quarter row during N4), `src/components/chapter-card.ts`
   (opening title card), `src/components/pointer.ts` (Sun -> Moon reflection annotation during N1/N2).

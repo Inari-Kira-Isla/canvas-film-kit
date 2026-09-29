@@ -87,6 +87,25 @@ const SUITES = [
     args: (f) => [path.join(f, 'src'), path.join(f, 'research', 'fact_table.md')],
   },
   {
+    label: 'claim-usage',
+    script: path.join(KIT, 'gates', 'claim-usage.mjs'),
+    dir: path.join(KIT, 'gates', '__fixtures__', 'claim-usage'),
+    args: (f) => [path.join(f, 'src'), path.join(f, 'research', 'fact_table.md')],
+  },
+  {
+    label: 'font-size-check',
+    script: path.join(KIT, 'gates', 'font-size-check.mjs'),
+    dir: path.join(KIT, 'gates', '__fixtures__', 'font-size-check'),
+    args: (f) => [path.join(f, 'still.png'), '--region', f.endsWith('bad_twoline') ? '800,500,300,120' : f.endsWith('good') ? '800,500,300,80' : '800,500,300,20'],
+    only: ['good', 'bad', 'bad_twoline'],
+  },
+  {
+    label: 'audio-diag',
+    script: path.join(KIT, 'gates', 'audio-diag.mjs'),
+    dir: path.join(KIT, 'gates', '__fixtures__', 'audio-diag'),
+    args: (f) => [path.join(f, 'mix.wav')],
+  },
+  {
     label: 'onset-check',
     script: path.join(KIT, 'narration', 'onset-check.mjs'),
     dir: path.join(KIT, 'narration', '__fixtures__', 'onset-check'),

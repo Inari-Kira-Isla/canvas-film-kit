@@ -14,10 +14,10 @@ has no `node_modules` segment in it). The absolute path is real but specific to 
 the scaffold command — it is not meant to be committed and shared as-is across machines.
 
 ```json
-"dependencies": { "canvas-film-kit": "github:Inari-Kira-Isla/canvas-film-kit#v0.2.2" }
+"dependencies": { "canvas-film-kit": "github:Inari-Kira-Isla/canvas-film-kit#v0.2.3" }
 ```
 — when `kit new` was itself resolved through an npm/npx install of this kit (e.g. the README's
-`npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.2 new ...` quick start) — a bare semver range
+`npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.3 new ...` quick start) — a bare semver range
 here would 404 forever (or worse, silently resolve to an unrelated same-named package if one is ever
 registered) since there is nothing on the registry to satisfy it. npm's git-dependency spec has no
 subdirectory selector, so this points at the **repo root**, not `packages/kit/` — which is exactly
@@ -37,7 +37,7 @@ Two things worth knowing if you hit surprises:
    workspaces to install `packages/kit`'s dependencies) — otherwise a gate step that needs `esbuild`
    (story-metrics.mjs) will fail to resolve it even though the scaffolded project's own
    `node_modules/esbuild` exists.
-2. **The `github:...#v0.2.2` form is pinned to a tag on purpose.** A scaffold made today keeps
+2. **The `github:...#v0.2.3` form is pinned to a tag on purpose.** A scaffold made today keeps
    resolving the same tree even after a later tag changes root `package.json`'s shape. Forking this
    kit under a different GitHub owner? Set `CANVAS_FILM_KIT_GIT_SPEC` (see `new-film.mjs`) rather than
    editing this file.
