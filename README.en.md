@@ -55,7 +55,7 @@ This kit is **not published to the npm registry** — install straight from GitH
 [`docs/design/why-file-dependency.md`](docs/design/why-file-dependency.md)).
 
 ```bash
-npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.0 new my-film --profile explainer
+npx --yes github:Inari-Kira-Isla/canvas-film-kit#v0.2.1 new my-film --profile explainer
 cd my-film
 npm install
 npm run dev              # leave this terminal running

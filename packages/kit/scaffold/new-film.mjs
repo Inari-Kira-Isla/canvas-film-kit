@@ -51,11 +51,11 @@ const AGENT_FILES = [
 // I3' fix (2026-09-29 re-review, second pass) — the git spec a scaffolded project's package.json
 // depends on when `kit new`/`create-canvas-film` was itself run from an npm-installed copy of this
 // kit (see the `usesNodeModulesInstall` branch below). Points at this repo's own root (npm git deps
-// cannot target a subdirectory), pinned to the v0.2.0 tag so a scaffold made today keeps working even
+// cannot target a subdirectory), pinned to the v0.2.1 tag so a scaffold made today keeps working even
 // after a later tag changes root package.json's shape. CANVAS_FILM_KIT_GIT_SPEC lets a fork (or this
 // re-review's own local-bare-repo test, via `git config --global url.<base>.insteadOf`) override the
 // owner/tag without touching this file — unset, it defaults to the real, public release location.
-const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.2.0';
+const RELEASE_GIT_SPEC = process.env.CANVAS_FILM_KIT_GIT_SPEC ?? 'github:Inari-Kira-Isla/canvas-film-kit#v0.2.1';
 
 // K1 shipped `abstract` only; K2 added `music` (design doc §3/§9 K2 row — a music-video profile
 // driven by beats.json rather than a narrator or fixed cadence). K3 added `explainer`
@@ -374,11 +374,35 @@ approved_by: <name> <YYYY-MM-DD>
     if (init.status !== 0) throw new ScaffoldError(`git init failed: ${init.stderr}`, 2);
     git(['add', '-A']);
     const commitMsg = `scaffold: canvas-film-kit@${kitVersion} profile=${profile}`;
-    const commit = git(['commit', '-q', '-m', commitMsg]);
+
+    // I4 fix (2026-09-29, CI red on ubuntu/windows + real "fresh machine" bug report): a brand-new
+    // machine (or a CI runner) has no git user.name/user.email configured anywhere — global, system,
+    // or local — and `git commit` hard-fails with "Author identity unknown" before this scaffold ever
+    // gets a chance to hand back a useful project. We check for that specific condition (both name AND
+    // email genuinely unset, not just unreadable) and, ONLY for this one commit, pass a fallback
+    // identity via `git -c` — this never touches the user's global/system config, so their own git
+    // identity (once they set one) is completely unaffected on every later commit they make. We do NOT
+    // silently keep using the fallback identity going forward — we print a one-line hint so the user
+    // sets their own identity before their next real commit.
+    const hasName = git(['config', 'user.name']).stdout.trim().length > 0;
+    const hasEmail = git(['config', 'user.email']).stdout.trim().length > 0;
+    const FALLBACK_NAME = 'canvas-film-kit scaffold';
+    const FALLBACK_EMAIL = 'scaffold@canvas-film-kit.invalid';
+    const commitArgs = ['commit', '-q', '-m', commitMsg];
+    let usedFallbackIdentity = false;
+    if (!hasName || !hasEmail) {
+      usedFallbackIdentity = true;
+      commitArgs.unshift('-c', `user.email=${FALLBACK_EMAIL}`);
+      commitArgs.unshift('-c', `user.name=${FALLBACK_NAME}`);
+    }
+    const commit = git(commitArgs);
     if (commit.status !== 0) {
       throw new ScaffoldError(`git commit failed (is git user.name/user.email configured?): ${commit.stderr}${commit.stdout}`, 2);
     }
     gitMessage = `git init + first commit — "${commitMsg}"`;
+    if (usedFallbackIdentity) {
+      gitMessage += `\nNote: no git user.name/user.email was configured on this machine, so the first commit was made as "${FALLBACK_NAME} <${FALLBACK_EMAIL}>" (this project's local git config was NOT changed). Run \`git config --global user.name "Your Name"\` and \`git config --global user.email you@example.com\` before your next commit.`;
+    }
   }
 
   return { target: resolvedTarget, profile, axes, gitMessage };
